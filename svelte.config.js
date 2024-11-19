@@ -16,6 +16,9 @@ const config = {
       $components: "src/lib/components",
       $assets: "src/assets",
     },
+    compilerOptions: {
+      runes: true,
+    },
   },
 };
 
