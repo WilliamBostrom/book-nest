@@ -1,3 +1,14 @@
+<script lang="ts">
+  import Logo from "$assets/app-logo.svg"
+</script>
+
+<header>
+  <a href="/">
+    <img src={Logo} alt="" class="logo">
+  </a>
+
+</header>
+
 <style>
   header {
     display: flex;

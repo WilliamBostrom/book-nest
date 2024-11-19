@@ -1,4 +1,19 @@
+<script lang="ts">
+  import heroImage from "$assets/hero.png";
+  import { Button } from '$components';
 
+</script>
+
+<section class="hero default-margin">
+  <div class="hero-text">
+    <h1>Book Nest</h1>
+    <h3>Your personal book library.</h3>
+    <h4 class="mt-l">Create your own library and manage your books.</h4>
+    <h4 class="mb-s">Our app offers a beautiful designed, easy-to-use interface that makes managing your book collection a joy</h4>
+    <Button href="/register">Sign up</Button>
+  </div>
+    <img class="hero-image" src={heroImage} alt="" />
+</section>
 
 <style>
   .hero {
