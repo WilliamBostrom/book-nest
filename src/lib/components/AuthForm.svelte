@@ -1,6 +1,4 @@
 <script lang="ts">
-  // import type { ComponentProps } from 'svelte';
-
   import { Button } from '$components';
   import type { ActionData } from '../../routes/register/$types';
 
@@ -24,12 +22,28 @@
       {/each}
       {/if}
       {#if isRegistration}
-      <input placeholder="Name" type="text" name="name">
+      <input 
+      placeholder="Name" 
+      type="text" 
+      name="name"
+      value={form?.name || ""}>
       {/if}
-      <input placeholder="Email" type="text" name="email">
-      <input placeholder="Password" type="password" name="password">
+      <input 
+      placeholder="Email" 
+      type="text" 
+      name="email"
+      value={form?.email || ""}>
+      <input 
+      placeholder="Password" 
+      type="password" 
+      name="password"
+      value={form?.password || ""}>
       {#if isRegistration}
-      <input placeholder="Confirm password" type="password" name="password">
+      <input 
+      placeholder="Confirm password" 
+      type="password" 
+      name="password"
+      value={form?.passwordConfirmation || ""}>
       {/if}
       <Button type="submit" >{isRegistration ? "Register" : "Login"}</Button>
       {#if isRegistration}
