@@ -10,69 +10,73 @@
 
   let { isRegistration, form }: ComponentProps = $props()
 
-  let isSpinning = false;
+  let isSpinning = $state(false);
 
-// Funktion för att hantera lyckad inloggning
-const handleLoginSuccess = () => {
-  isSpinning = true;
-};
+  const handleLoginSuccess = () => {
+    isSpinning = true;
+  };
 
-$effect(() => {
+  $effect(() => {
     if (form?.success) {
       handleLoginSuccess();
     }
   });
-
 </script>
 
 <div class="default-margin auth-container">
   <h1 class="mb-l">{isRegistration ? "Register" : "Login"}</h1>
   <div class="form-and-social-login">
-    <form transition:spin={isSpinning ? { spin: 1, duration: 2000 } : null} class="auth-form" method="POST" action={isRegistration ? "" : "/login/?/signInWithPassword"}>
+    <form 
+      transition:spin={isSpinning 
+        ? { spin: 1, duration: 2000 } 
+        : undefined} 
+      class="auth-form" 
+      method="POST" 
+      action={isRegistration ? "" : "/login/?/signInWithPassword"}
+    >
       {#if form && form.errors?.length}
-      {#each form.errors as error}
-        <div class="auth-error">{error}</div>
-      {/each}
+        {#each form.errors as error}
+          <div class="auth-error">{error}</div>
+        {/each}
       {/if}
       {#if isRegistration}
-      <input 
-      placeholder="Name" 
-      type="text" 
-      name="name"
-      value={form?.name || ""}>
+        <input 
+          placeholder="Name" 
+          type="text" 
+          name="name"
+          value={form?.name || ""}>
       {/if}
       <input 
-      placeholder="Email" 
-      type="text" 
-      name="email"
-      value={form?.email || ""}>
+        placeholder="Email" 
+        type="text" 
+        name="email"
+        value={form?.email || ""}>
       <input 
-      placeholder="Password" 
-      type="password" 
-      name="password"
-      value={form?.password || ""}>
+        placeholder="Password" 
+        type="password" 
+        name="password"
+        value={form?.password || ""}>
       {#if isRegistration}
-      <input 
-      placeholder="Confirm password" 
-      type="password" 
-      name="password"
-      value={form?.passwordConfirmation || ""}>
+        <input 
+          placeholder="Confirm password" 
+          type="password" 
+          name="password"
+          value={form?.passwordConfirmation || ""}>
       {/if}
-      <Button type="submit" >{isRegistration ? "Register" : "Login"}</Button>
+      <Button type="submit">{isRegistration ? "Register" : "Login"}</Button>
       {#if isRegistration}
-      <p class="auth-hint mt-s">Already have an account? <a href="/login">Login</a></p>
+        <p class="auth-hint mt-s">Already have an account? <a href="/login">Login</a></p>
       {:else}
-      <p class="auth-hint mt-s">Do not have an account yet? <a href="/register">Register</a></p>
+        <p class="auth-hint mt-s">Do not have an account yet? <a href="/register">Register</a></p>
       {/if}
     </form>
     <div class="social-login">
       <form method="post" action={isRegistration ? "/login/?/googleLogin" : "?/googleLogin"}>
-       <Button type="submit">Log in using Google</Button>
+        <Button type="submit">Log in using Google</Button>
       </form>
     </div>
   </div>
 </div>
-
 
 <style>
   .auth-container {

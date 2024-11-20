@@ -68,8 +68,16 @@ export const actions = {
       return fail(400, returnObject as any);
     }
 
-    returnObject.success = true;
-    return returnObject;
-    // redirect(303, "/private/dashboard");
+    const userId = data.user.id;
+    await supabase.from("user_names").insert([
+      {
+        user_id: userId,
+        name,
+      },
+    ]);
+
+    // returnObject.success = true;
+    // return returnObject;
+    redirect(303, "/private/dashboard");
   },
 };

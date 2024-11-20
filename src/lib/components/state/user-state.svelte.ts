@@ -25,7 +25,7 @@ export class UserState {
 
   async logout() {
     await this.supabase?.auth.signOut();
-    goto("/login");
+    // goto("/login");
   }
 }
 
