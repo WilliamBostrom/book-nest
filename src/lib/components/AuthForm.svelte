@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Button } from '$components';
   import type { ActionData } from '../../routes/register/$types';
-
+  import spin from ".././transitions/spin"
 
   interface ComponentProps {
     isRegistration: boolean;
@@ -10,12 +10,25 @@
 
   let { isRegistration, form }: ComponentProps = $props()
 
+  let isSpinning = false;
+
+// Funktion för att hantera lyckad inloggning
+const handleLoginSuccess = () => {
+  isSpinning = true;
+};
+
+$effect(() => {
+    if (form?.success) {
+      handleLoginSuccess();
+    }
+  });
+
 </script>
 
 <div class="default-margin auth-container">
   <h1 class="mb-l">{isRegistration ? "Register" : "Login"}</h1>
   <div class="form-and-social-login">
-    <form class="auth-form" method="POST">
+    <form transition:spin={isSpinning ? { spin: 1, duration: 2000 } : null} class="auth-form" method="POST" action={isRegistration ? "" : "/login/?/signInWithPassword"}>
       {#if form && form.errors?.length}
       {#each form.errors as error}
         <div class="auth-error">{error}</div>
@@ -53,7 +66,9 @@
       {/if}
     </form>
     <div class="social-login">
-      <!-- Btn here later -->
+      <form method="post" action={isRegistration ? "/login/?/googleLogin" : "?/googleLogin"}>
+       <Button type="submit">Log in using Google</Button>
+      </form>
     </div>
   </div>
 </div>

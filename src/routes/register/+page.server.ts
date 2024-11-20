@@ -1,7 +1,7 @@
 import { fail, redirect } from "@sveltejs/kit";
 
 interface ReturnObject {
-  success: boolean;
+  success: boolean | undefined;
   errors: string[];
   email: string;
   password: string;
@@ -21,7 +21,7 @@ export const actions = {
     const passwordConfirmation = formData.get("name") as string;
 
     const returnObject: ReturnObject = {
-      success: true,
+      success: undefined,
       email,
       name,
       password,
@@ -67,6 +67,9 @@ export const actions = {
       returnObject.success = false;
       return fail(400, returnObject as any);
     }
-    redirect(303, "/private/dashboard");
+
+    returnObject.success = true;
+    return returnObject;
+    // redirect(303, "/private/dashboard");
   },
 };
