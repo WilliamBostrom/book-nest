@@ -1,3 +1,25 @@
+<script lang="ts">
+  import BookCard from './BookCard.svelte';
+  import type {Book} from '$lib/state/user-state.svelte';
+
+interface BookCategoryProps {
+  categoryName: string;
+  booksToDisplay: Book[];
+}
+
+  let {categoryName, booksToDisplay}: BookCategoryProps = $props();
+</script>
+
+
+<div class="books-category mb-5">
+<h3 class="mb-5">{categoryName}</h3>
+<div class="books-container">
+  {#each booksToDisplay as book}
+    <BookCard {book}/>
+  {/each}
+</div>
+</div>
+
 <style>
   .books-container {
     display: flex;
