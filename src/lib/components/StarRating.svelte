@@ -1,7 +1,7 @@
 <script lang="ts">
   interface StarRatingProps {
-    value: number;
-    isReadOnly: boolean;
+    value?: number | undefined;
+    isReadOnly?: boolean;
     updateDatabaseRating?: (newRating: number) => void;
   }
 
