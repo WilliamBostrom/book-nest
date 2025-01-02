@@ -139,7 +139,7 @@ import { getUserState, type Book } from '$lib/state/user-state.svelte';
       {/if}
       <div class="buttons-container mt-m">
         <Button isSecondary={true} onclick={toggleEditModeAndSaveToDatabase}>{!isEditMode ? "Edit" : "Save changes"}</Button>
-        <Button isDanger={true} onclick={()=> console.log("hej")}>Delete book from libary</Button>
+        <Button isDanger={true} onclick={() => userContext.deleteBookFromLibrary(book.id)}>Delete book from libary</Button>
       </div>
     </div>
     <div class="book-cover">
