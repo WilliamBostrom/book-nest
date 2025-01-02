@@ -153,6 +153,28 @@ export class UserState {
     }
   }
 
+  async uploadBookCover(bookId: number, file: File) {
+    if (!this.user || !this.supabase) {
+      return;
+    }
+
+    const filePath = `${this.user.id}/${new Date().getTime()}_${bookId}`;
+    const { error } = await this.supabase.storage
+      .from("book-covers")
+      .upload(filePath, file);
+
+    if (error) {
+      console.log("Error uploading book cover", error);
+      return;
+    }
+
+    const {
+      data: { publicUrl },
+    } = this.supabase.storage.from("book-covers").getPublicUrl(filePath);
+
+    await this.updateBook(bookId, { cover_image: publicUrl });
+  }
+
   async logout() {
     await this.supabase?.auth.signOut();
     goto("/login");

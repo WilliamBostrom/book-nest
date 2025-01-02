@@ -23,6 +23,7 @@
   "type": "module",
   "dependencies": {
     "@supabase/ssr": "^0.5.2",
-    "@supabase/supabase-js": "^2.46.1"
+    "@supabase/supabase-js": "^2.46.1",
+    "svelte-file-dropzone": "^2.0.9"
   }
 }
