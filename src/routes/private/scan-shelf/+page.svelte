@@ -1,14 +1,25 @@
 <script lang="ts">
+  import Button from '$components/Button.svelte';
   import { covertFileToBase64 } from '$lib/types/openai-helpers';
   import Icon from '@iconify/svelte';
   import Dropzone from 'svelte-file-dropzone';
+  import { getUserState, type OpenAiBook } from '$lib/state/user-state.svelte';
 
+  let userContext = getUserState();
   let isLoading = $state(false)
+  let errorMessage = $state("");
+  let recognizedBooks = $state<OpenAiBook[]>([   {
+        bookTitle: "Harry Potter and the Philosopher's Stone",
+        author: "J.K. Rowling",
+      },
+      {
+        bookTitle: "The Hobbit",
+        author: "J.R.R. Tolkien",
+      },]);
 
-  interface OpenAiBook {
-    author: string;
-    bookTitle: string;
-  }
+  let booksSuccessfullyAdded = $state(false);
+
+
 
   async function handleDrop(e: CustomEvent<any>){
     const {acceptedFiles} = e.detail;
@@ -27,35 +38,93 @@
         }),
       });
       const result = (await response.json()) as {bookArray: OpenAiBook[]}; 
+      recognizedBooks = result.bookArray;
       console.log(result);
       
    }
       catch (error) {
+        errorMessage = "An error occurred while uploading the file. Please try again.";
         console.error(error);
       }
       finally {
         isLoading = false;
       }
+    } else {
+      errorMessage = "Please upload a file with a valid format.";
     }
-
   }
+ function removeBook(index: number) {
+   recognizedBooks = recognizedBooks.slice(index, 1);
+ }
+
+ async function addAllBooks() {
+  isLoading = true;
+  try {
+    await userContext.addBookToLibrary(recognizedBooks);
+    booksSuccessfullyAdded = true;
+    isLoading = false;
+  } catch (error: any) {
+    errorMessage = "An error occurred while adding the books to your library. Please try again.";
+    console.error(error); 
+ } 
+}
 </script>
 
 <h2 class="mt-m mb-l">Take a picture to add books</h2>
+{#if recognizedBooks.length === 0}
 <div class="upload-area">
   <div class="upload-container">
-    <Dropzone on:drop={handleDrop}
-     multiple={false}
-     accept="image/*"
-     maxSize={10 * 1024 * 1024}
-     containerClasses={"dropzone-books"}
-     >    
-     <Icon icon="bi:camera-fill" width={"40px"}/>
-     <p>Drag and drop a picture here to select a file</p></Dropzone>
+    {#if errorMessage}
+      <h4 class="text-center mb-s upload-error">{errorMessage}</h4>
+    {/if}
+    {#if isLoading}
+      <div class="spinner-container">
+        <div class="spinner"></div>
+        <p>Uploading...</p>
+      </div>
+      {:else}
+      <Dropzone on:drop={handleDrop}
+      multiple={false}
+      accept="image/*"
+      maxSize={10 * 1024 * 1024}
+      containerClasses={"dropzone-books"}
+      >    
+      <Icon icon="bi:camera-fill" width={"40px"}/>
+      <p>Drag and drop a picture here to select a file</p></Dropzone>
+    {/if}
+
     
   
   </div>
 </div>
+{:else if !booksSuccessfullyAdded}
+  <div class="found-books">
+      <table class="book-list mb-m">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Delete</th>
+          </tr>
+        
+        </thead>
+        <tbody>
+          {#each recognizedBooks as book, i}
+          <tr>
+            <td>{book.bookTitle}</td>
+            <td>{book.author}</td>
+            <td><button type="button" aria-label="remove book" class="remove-book" onclick={()=> removeBook(i)}><Icon icon="streamline:delete-1-solid" width={"30"}/></button></td>
+          </tr>
+         {/each}
+
+        </tbody>
+      </table>
+      <Button onclick={addAllBooks}>Add all books</Button>
+    </div>
+  {:else}
+  <h4>The selected {recognizedBooks.length} books have been added to your libary</h4>
+  <Button href="/private/dashboard">Go to your library</Button>
+{/if}
 
 <style>
   .book-list {
