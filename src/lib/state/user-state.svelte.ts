@@ -9,6 +9,11 @@ interface UserStateProps {
   user: User | null;
 }
 
+export interface OpenAiBook {
+  author: string;
+  bookTitle: string;
+}
+
 export interface Book {
   author: string | null;
   cover_image: string | null;
@@ -23,12 +28,7 @@ export interface Book {
   user_id: string;
 }
 
-export interface OpenAiBook {
-  author: string;
-  bookTitle: string;
-}
-
-type updatableBookFields = Omit<Book, "id" | "user_id" | "created_at">;
+type UpdatableBookFields = Omit<Book, "id" | "user_id" | "created_at">;
 
 export class UserState {
   session = $state<Session | null>(null);
@@ -83,34 +83,24 @@ export class UserState {
   }
 
   getHighestRatedBooks() {
-    if (this.allBooks.length === 0) {
-      return [];
-    }
     return this.allBooks
-      .filter((book) => book.rating !== null)
+      .filter((book) => book.rating)
       .toSorted((a, z) => z.rating! - a.rating!)
       .slice(0, 9);
   }
 
   getUnreadBooks() {
     return this.allBooks
-      .filter((book) => !book.started_reading_on && !book.finished_reading_on)
+      .filter((book) => !book.started_reading_on)
       .toSorted(
         (a, z) =>
-          new Date(a.created_at).getTime() - new Date(z.created_at).getTime()
+          new Date(z.created_at).getTime() - new Date(a.created_at).getTime()
       )
       .slice(0, 9);
   }
 
-  getFavoriteGenreBooks() {
-    if (this.allBooks.length === 0) {
-      return [];
-    }
-    return this.allBooks.filter((book) => book.genre === "Fantasy").slice(0, 9);
-  }
-
   getFavoriteGenre() {
-    if (this.allBooks.length === 0) {
+    if (this.allBooks.filter((book) => book.genre).length === 0) {
       return "";
     }
     const genreCounts: { [key: string]: number } = {};
@@ -128,20 +118,35 @@ export class UserState {
         }
       });
     });
-    const mostCommonGenre = Object.keys(genreCounts).reduce((a, z) => {
-      return genreCounts[a] > genreCounts[z] ? a : z;
-    });
-    return mostCommonGenre || null;
+
+    const mostCommonGenre = Object.keys(genreCounts).reduce((a, b) =>
+      genreCounts[a] > genreCounts[b] ? a : b
+    );
+
+    return mostCommonGenre || "";
+  }
+
+  getBooksFromFavoriteGenre() {
+    const mostCommonGenre = this.getFavoriteGenre();
+
+    return this.allBooks
+      .filter((book) => book.genre?.includes(mostCommonGenre))
+      .toSorted((a, z) => {
+        const ratingA = a.rating || 0;
+        const ratingZ = z.rating || 0;
+        return ratingZ - ratingA;
+      });
   }
 
   getBookById(bookId: number) {
     return this.allBooks.find((book) => book.id === bookId);
   }
 
-  async updateBook(bookId: number, updateObject: Partial<updatableBookFields>) {
+  async updateBook(bookId: number, updateObject: Partial<UpdatableBookFields>) {
     if (!this.supabase) {
       return;
     }
+
     const { status, error } = await this.supabase
       .from("books")
       .update(updateObject)
@@ -150,7 +155,10 @@ export class UserState {
     if (status === 204 && !error) {
       this.allBooks = this.allBooks.map((book) => {
         if (book.id === bookId) {
-          return { ...book, ...updateObject };
+          return {
+            ...book,
+            ...updateObject,
+          };
         } else {
           return book;
         }
@@ -158,19 +166,18 @@ export class UserState {
     }
   }
 
-  async uploadBookCover(bookId: number, file: File) {
+  async uploadBookCover(file: File, bookId: number) {
     if (!this.user || !this.supabase) {
       return;
     }
 
-    const filePath = `${this.user.id}/${new Date().getTime()}_${bookId}`;
-    const { error } = await this.supabase.storage
+    const filePath = `${this.user.id}/${new Date().getTime()}_${file.name}`;
+    const { error: uploadError } = await this.supabase.storage
       .from("book-covers")
       .upload(filePath, file);
 
-    if (error) {
-      console.log("Error uploading book cover", error);
-      return;
+    if (uploadError) {
+      return console.log(uploadError);
     }
 
     const {
@@ -189,48 +196,86 @@ export class UserState {
       .from("books")
       .delete()
       .eq("id", bookId);
-
-    if (status === 204 && !error) {
+    if (!error && status === 204) {
       this.allBooks = this.allBooks.filter((book) => book.id !== bookId);
     }
 
     goto("/private/dashboard");
   }
 
-  async addBookToLibrary(bookToAdd: OpenAiBook[]) {
-    if (!this.user || !this.supabase) {
+  async addBooksToLibrary(booksToAdd: OpenAiBook[]) {
+    if (!this.supabase || !this.user) {
       return;
     }
 
     const userId = this.user.id;
 
-    const proccessedBooks = bookToAdd.map((book) => ({
+    const processedBooks = booksToAdd.map((book) => ({
       title: book.bookTitle,
       author: book.author,
       user_id: userId,
     }));
 
-    const { error } = await this.supabase.from("books").insert(proccessedBooks);
+    const { error } = await this.supabase.from("books").insert(processedBooks);
     if (error) {
-      throw new Error("Error adding book to library");
+      throw new Error(error.message);
     } else {
       await this.fetchUserData();
-      // const { data } = await this.supabase
-      //   .from("books")
-      //   .select("*")
-      //   .eq("user_id", userId);
+    }
+  }
 
-      // if (!data) {
-      //   throw new Error("Error fetching books after adding book");
-      // }
+  async updateAccountData(email: string, userName: string) {
+    if (!this.session) {
+      return;
+    }
 
-      // this.allBooks = data;
+    try {
+      const response = await fetch("/api/update-account", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.session.access_token}`,
+        },
+        body: JSON.stringify({
+          email,
+          userName,
+        }),
+      });
+
+      if (response.ok) {
+        this.userName = userName;
+      }
+    } catch (error) {
+      console.log(`Failed to delete account:`, error);
     }
   }
 
   async logout() {
     await this.supabase?.auth.signOut();
     goto("/login");
+  }
+
+  async deleteAccount() {
+    if (!this.session) {
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/delete-account", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.session.access_token}`,
+        },
+      });
+
+      if (response.ok) {
+        await this.logout();
+        goto("/");
+      }
+    } catch (error) {
+      console.log("Failed to delete account:", error);
+    }
   }
 }
 

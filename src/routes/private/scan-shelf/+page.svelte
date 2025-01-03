@@ -1,6 +1,6 @@
 <script lang="ts">
   import Button from '$components/Button.svelte';
-  import { covertFileToBase64 } from '$lib/types/openai-helpers';
+  import { covertFileToBase64 } from '$lib/utils/openai-helpers';
   import Icon from '@iconify/svelte';
   import Dropzone from 'svelte-file-dropzone';
   import { getUserState, type OpenAiBook } from '$lib/state/user-state.svelte';
